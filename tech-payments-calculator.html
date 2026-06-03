@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tech-Payments | Field Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080f1a;
+    --surface: #0f1e32;
+    --surface2: #162840;
+    --accent: #2d9de8;
+    --bright: #4fb8ff;
+    --gold: #f5a623;
+    --green: #00d68f;
+    --red: #ff4d6d;
+    --white: #eef2f7;
+    --muted: #6a8fad;
+    --border: rgba(45,157,232,0.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(45,157,232,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45,157,232,0.04) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  .app {
+    position:relative; z-index:1;
+    max-width:480px; margin:0 auto;
+    padding-bottom:80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background:rgba(8,15,26,0.95);
+    padding:22px 20px 16px;
+    border-bottom:1px solid var(--border);
+    position:sticky; top:0; z-index:20;
+    backdrop-filter:blur(16px);
+  }
+  .logo-row { display:flex; align-items:center; gap:10px; margin-bottom:2px; }
+  .logo-mark {
+    width:30px; height:30px; background:var(--accent);
+    border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:18px; color:#fff; flex-shrink:0;
+  }
+  .logo-text { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; }
+  .logo-text span { color:var(--accent); }
+  .header-sub { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2.5px; color:var(--muted); text-transform:uppercase; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:rgba(8,15,26,0.97);
+    border-top:1px solid var(--border);
+    display:flex; max-width:480px; margin:0 auto;
+    backdrop-filter:blur(20px);
+  }
+  .nav-btn {
+    flex:1; padding:12px 4px 14px;
+    background:none; border:none; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    color:var(--muted); transition:color 0.2s;
+  }
+  .nav-btn.active { color:var(--accent); }
+  .nav-icon { font-size:18px; line-height:1; }
+  .nav-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1.5px; text-transform:uppercase; }
+  .nav-btn.active .nav-label { color:var(--accent); }
+
+  /* ── VIEWS ── */
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* ── SHARED ── */
+  .section {
+    padding:22px 20px;
+    border-bottom:1px solid var(--border);
+    animation:fadeUp 0.35s ease both;
+  }
+  @keyframes fadeUp {
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .section-label {
+    font-family:'DM Mono',monospace; font-size:10px;
+    letter-spacing:3px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px;
+  }
+
+  /* ── CALCULATOR ── */
+  .shop-toggle { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .shop-btn {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:14px 10px;
+    cursor:pointer; text-align:center; color:var(--muted);
+    transition:all 0.2s;
+  }
+  .shop-btn.active { border-color:var(--accent); background:rgba(45,157,232,0.1); color:var(--white); }
+  .shop-btn-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; display:block; margin-bottom:2px; }
+  .shop-btn-sub { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; opacity:0.7; }
+  .shop-btn.active .shop-btn-title { color:var(--bright); }
+
+  .input-group { margin-bottom:14px; }
+  .input-label { font-size:12px; color:var(--muted); margin-bottom:6px; display:block; }
+  .input-wrap { position:relative; display:flex; align-items:center; }
+  .input-prefix {
+    position:absolute; left:14px;
+    font-family:'DM Mono',monospace; font-size:16px;
+    color:var(--accent); pointer-events:none; z-index:1;
+  }
+  input[type="number"] {
+    width:100%; background:var(--surface);
+    border:1px solid var(--border); border-radius:10px;
+    padding:14px 14px 14px 32px;
+    font-family:'DM Mono',monospace; font-size:20px; color:var(--white);
+    outline:none; transition:border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance:none; appearance:none;
+  }
+  input[type="number"]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,157,232,0.15); }
+  input[type="number"]::placeholder { color:var(--surface2); }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+
+  .split-inputs { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .rate-display {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:20px; text-align:center;
+    position:relative; overflow:hidden;
+  }
+  .rate-display::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  }
+  .rate-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:'DM Mono',monospace; margin-bottom:8px; }
+  .rate-number { font-family:'Bebas Neue',sans-serif; font-size:64px; line-height:1; letter-spacing:2px; transition:color 0.3s; }
+  .rate-number.good { color:var(--green); }
+  .rate-number.fair { color:var(--gold); }
+  .rate-number.bad  { color:var(--red); }
+  .rate-number.empty{ color:var(--surface2); }
+  .rate-verdict { margin-top:8px; font-size:13px; color:var(--muted); min-height:18px; transition:color 0.3s; }
+
+  .compare-grid { display:flex; flex-direction:column; gap:10px; }
+  .compare-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:16px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:relative; overflow:hidden;
+  }
+  .compare-card.best {
+    border-color:var(--green);
+    background:linear-gradient(135deg,var(--surface),rgba(0,214,143,0.07));
+  }
+  .compare-card.best::after {
+    content:'TARGET'; position:absolute; top:8px; right:8px;
+    font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px;
+    background:var(--green); color:var(--bg); padding:2px 7px;
+    border-radius:20px; font-weight:600;
+  }
+  .card-rate { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--bright); letter-spacing:1px; }
+  .card-label { font-size:11px; color:var(--muted); margin-top:2px; font-family:'DM Mono',monospace; }
+  .plan-tag {
+    display:inline-block; font-family:'DM Mono',monospace; font-size:9px;
+    letter-spacing:1px; padding:2px 8px; border-radius:20px; margin-left:4px; vertical-align:middle;
+  }
+  .tag-ic  { background:rgba(0,214,143,0.15); color:var(--green); }
+  .tag-sur { background:rgba(245,166,35,0.15); color:var(--gold); }
+
+  .card-savings { text-align:right; }
+  .savings-amount { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--green); letter-spacing:1px; }
+  .savings-amount.zero { color:var(--muted); }
+  .savings-period { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; }
+  .annual-row { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:4px; }
+  .annual-row span { color:var(--green); font-weight:500; }
+
+  .surcharge-card {
+    background:linear-gradient(135deg,rgba(245,166,35,0.08),rgba(245,166,35,0.02));
+    border:1px solid rgba(245,166,35,0.3); border-radius:14px; padding:20px;
+    position:relative; overflow:hidden;
+  }
+  .surcharge-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .surcharge-headline { font-family:'Bebas Neue',sans-serif; font-size:34px; color:var(--gold); letter-spacing:2px; line-height:1; margin-bottom:6px; }
+  .surcharge-sub { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:14px; }
+  .surcharge-stat { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid rgba(245,166,35,0.12); }
+  .surcharge-stat-label { font-size:12px; color:var(--muted); font-family:'DM Mono',monospace; }
+  .surcharge-stat-value { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); letter-spacing:1px; }
+
+  .compliance-note {
+    background:rgba(45,157,232,0.05); border:1px solid rgba(45,157,232,0.18);
+    border-radius:10px; padding:12px 14px; margin-top:14px;
+    font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); line-height:1.6;
+  }
+  .compliance-note strong { color:var(--bright); display:block; margin-bottom:4px; letter-spacing:1.5px; font-size:9px; }
+
+  .residual-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+  .residual-cell {
+    background:rgba(245,166,35,0.06); border:1px solid rgba(245,166,35,0.25);
+    border-radius:10px; padding:12px 6px; text-align:center;
+  }
+  .residual-rate { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); letter-spacing:1px; line-height:1; }
+  .residual-cost { font-family:'DM Mono',monospace; font-size:13px; color:var(--white); margin-top:6px; font-weight:500; }
+  .residual-period { font-family:'DM Mono',monospace; font-size:8px; color:var(--muted); letter-spacing:1px; margin-top:2px; text-transform:uppercase; }
+
+  .dual-card {
+    background:linear-gradient(135deg, rgba(0,214,143,0.1), rgba(0,214,143,0.03));
+    border:1px solid rgba(0,214,143,0.35); border-radius:14px; padding:20px;
+    margin-top:12px; position:relative; overflow:hidden;
+  }
+  .dual-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--green), transparent);
+  }
+  .dual-badge {
+    display:inline-block; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px;
+    background:rgba(0,214,143,0.15); color:var(--green); padding:3px 10px; border-radius:20px;
+    margin-bottom:10px;
+  }
+
+  .results-block { transition:opacity 0.3s; }
+  .results-block.hidden { opacity:0.25; pointer-events:none; }
+
+  .divider-label { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .divider-label::before,.divider-label::after { content:''; flex:1; height:1px; background:var(--border); }
+  .divider-text { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+  .est-note { margin-top:10px; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.5px; color:var(--muted); line-height:1.6; opacity:0.85; font-style:italic; }
+
+  .split-toggle { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .split-toggle-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--muted); }
+  .toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-track { position:absolute; inset:0; background:var(--surface2); border-radius:22px; cursor:pointer; transition:background 0.2s; }
+  .toggle-track::before {
+    content:''; position:absolute; width:16px; height:16px; left:3px; top:3px;
+    background:var(--muted); border-radius:50%; transition:transform 0.2s, background 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background:rgba(245,166,35,0.25); }
+  .toggle-switch input:checked + .toggle-track::before { transform:translateX(18px); background:var(--gold); }
+
+  .reset-btn {
+    width:calc(100% - 40px); margin:20px 20px 0;
+    padding:14px; background:transparent;
+    border:1px solid var(--border); border-radius:10px;
+    color:var(--muted); font-family:'DM Mono',monospace;
+    font-size:12px; letter-spacing:2px; cursor:pointer;
+    transition:all 0.2s; text-transform:uppercase;
+  }
+  .reset-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* ── REFERENCE ── */
+  .ref-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:16px; margin-bottom:10px;
+  }
+  .ref-card-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; margin-bottom:6px; }
+  .ref-card-body { font-size:13px; color:#a0bcd4; line-height:1.65; }
+  .ref-card-body strong { color:var(--white); font-weight:600; }
+  .rate-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .chip { padding:5px 13px; border-radius:20px; font-family:'DM Mono',monospace; font-size:12px; letter-spacing:1px; border:1px solid; font-weight:500; }
+  .chip-green { border-color:var(--green); color:var(--green); background:rgba(0,214,143,0.07); }
+  .chip-blue  { border-color:var(--bright); color:var(--bright); background:rgba(79,184,255,0.07); }
+  .chip-gold  { border-color:var(--gold);  color:var(--gold);  background:rgba(245,166,35,0.07); }
+
+  .fact-list { list-style:none; margin-top:6px; }
+  .fact-list li { display:flex; gap:10px; padding:7px 0; border-bottom:1px solid rgba(45,157,232,0.07); font-size:13px; color:#a0bcd4; line-height:1.5; }
+  .fact-list li:last-child { border-bottom:none; }
+  .fact-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); margin-top:7px; flex-shrink:0; }
+
+  .obj-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:10px; }
+  .obj-q { font-family:'DM Mono',monospace; font-size:11px; color:var(--gold); margin-bottom:8px; font-style:italic; }
+  .obj-a { font-size:13px; color:#a0bcd4; line-height:1.65; }
+  .obj-a strong { color:var(--white); }
+
+  /* ── QUIZ ── */
+  .quiz-wrap { padding:22px 20px; }
+  .quiz-progress-bar { height:3px; background:var(--surface2); border-radius:3px; margin-bottom:22px; overflow:hidden; }
+  .quiz-progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); border-radius:3px; transition:width 0.4s ease; }
+  .quiz-counter { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--muted); text-align:center; margin-bottom:18px; text-transform:uppercase; }
+
+  .quiz-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:22px 18px; margin-bottom:18px;
+    position:relative; overflow:hidden; min-height:110px;
+  }
+  .quiz-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),transparent); }
+  .quiz-category { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .quiz-question { font-size:16px; font-weight:500; line-height:1.55; color:var(--white); }
+
+  .quiz-answer-box {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; padding:16px 18px; margin-bottom:18px; display:none;
+    animation:fadeUp 0.25s ease both;
+  }
+  .quiz-answer-box.show { display:block; }
+  .quiz-answer-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+  .quiz-answer-text { font-size:14px; color:#a0bcd4; line-height:1.65; }
+  .quiz-answer-text strong { color:var(--white); }
+
+  .quiz-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .quiz-btn-row.single { grid-template-columns:1fr; }
+  .qbtn { padding:14px; border-radius:10px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; border:1px solid; }
+  .qbtn-reveal { background:rgba(45,157,232,0.08); border-color:var(--accent); color:var(--accent); grid-column:1/-1; }
+  .qbtn-reveal:hover { background:rgba(45,157,232,0.18); }
+  .qbtn-got    { background:rgba(0,214,143,0.08); border-color:var(--green); color:var(--green); }
+  .qbtn-got:hover { background:rgba(0,214,143,0.18); }
+  .qbtn-missed { background:rgba(255,77,109,0.06); border-color:var(--red); color:var(--red); }
+  .qbtn-missed:hover { background:rgba(255,77,109,0.14); }
+  .qbtn-next   { background:transparent; border-color:var(--border); color:var(--muted); grid-column:1/-1; }
+  .qbtn-next:hover { border-color:var(--accent); color:var(--accent); }
+
+  .score-screen { text-align:center; padding:40px 20px; animation:fadeUp 0.4s ease both; }
+  .score-big { font-family:'Bebas Neue',sans-serif; font-size:88px; line-height:1; letter-spacing:4px; margin-bottom:6px; }
+  .score-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:20px; }
+  .score-msg { font-size:14px; color:#a0bcd4; line-height:1.6; margin-bottom:28px; max-width:300px; margin-left:auto; margin-right:auto; }
+  .score-restart { padding:14px 28px; background:rgba(45,157,232,0.08); border:1px solid var(--accent); border-radius:10px; color:var(--accent); font-family:'DM Mono',monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+  .score-restart:hover { background:rgba(45,157,232,0.18); }
+  .missed-list { margin-top:28px; text-align:left; }
+  .missed-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--red); text-transform:uppercase; margin-bottom:12px; }
+  .missed-item { background:var(--surface); border:1px solid rgba(255,77,109,0.18); border-radius:10px; padding:12px 14px; margin-bottom:8px; font-size:12px; color:#a0bcd4; line-height:1.5; }
+  .missed-item strong { color:var(--white); display:block; margin-bottom:4px; font-size:13px; }
+
+  .footer { text-align:center; padding:18px 20px; font-family:'DM Mono',monospace; font-size:10px; color:rgba(45,157,232,0.2); letter-spacing:1.5px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo-mark">T</div>
+      <div class="logo-text">TECH<span>-</span>PAYMENTS</div>
+    </div>
+    <div class="header-sub" id="headerSub">Rate Analyzer</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ CALCULATOR VIEW ═══ -->
+  <div class="view active" id="viewCalc">
+
+    <div class="section" style="animation-delay:0.04s">
+      <div class="section-label">Shop Type</div>
+      <div class="shop-toggle">
+        <div class="shop-btn active" id="btnOil" onclick="setShopType('oil')">
+          <span class="shop-btn-title">Oil Change</span>
+          <span class="shop-btn-sub">~1.25% avg</span>
+        </div>
+        <div class="shop-btn" id="btnOther" onclick="setShopType('other')">
+          <span class="shop-btn-title">Other Auto</span>
+          <span class="shop-btn-sub">~2.00% avg</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.08s">
+      <div class="section-label">Current Processing Info</div>
+      <div class="input-group">
+        <label class="input-label">Monthly Processing Volume</label>
+        <div class="input-wrap">
+          <span class="input-prefix">$</span>
+          <input type="number" id="volume" placeholder="0" inputmode="decimal" />
+        </div>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <label class="input-label">Total Monthly Fees Paid</label>
+        <div class="input-wrap">
+          <span class="input-prefix">$</span>
+          <input type="number" id="fees" placeholder="0" inputmode="decimal" />
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.12s">
+      <div class="section-label">Their Effective Rate</div>
+      <div class="rate-display">
+        <div class="rate-label">Currently Paying</div>
+        <div class="rate-number empty" id="effectiveRate">—</div>
+        <div class="rate-verdict" id="rateVerdict">Enter volume and fees above</div>
+      </div>
+    </div>
+
+    <div class="section results-block hidden" id="resultsBlock" style="animation-delay:0.14s">
+      <div class="divider-label"><span class="divider-text">Tech-Payments Plans</span></div>
+      <div class="compare-grid" id="compareGrid"></div>
+      <div class="est-note">Estimate only. Actual rate depends on card mix, ticket size, and volume. Could land lower or higher. We don't do flat rate.</div>
+    </div>
+
+    <div class="section results-block hidden" id="surchargeBlock" style="animation-delay:0.17s">
+      <div class="section-label">Surcharge — Residual Cost <span class="plan-tag tag-sur">Compliance-Ready</span></div>
+      <div class="surcharge-card">
+        <div class="surcharge-headline" style="font-size:26px">NEAR-ZERO COST</div>
+        <div class="surcharge-sub">Surcharging passes most of the cost to the cardholder. The business still carries a small residual, typically <strong style="color:var(--gold)">0.3% to 0.5%</strong> of volume. Here's what that looks like at each level.</div>
+
+        <div class="residual-grid" id="residualGrid">
+          <!-- JS populated: 0.3 / 0.4 / 0.5 cards -->
+        </div>
+
+        <div class="surcharge-stat" style="margin-top:6px">
+          <span class="surcharge-stat-label">Their current monthly fees</span>
+          <span class="surcharge-stat-value" id="surCurrentFees" style="color:var(--red)">—</span>
+        </div>
+
+        <div class="compliance-note">
+          <strong>COMPLIANCE</strong>
+          Tech-Payments configures your account to meet all card network surcharge rules. Proper disclosure, receipt formatting, and rate caps handled for you.
+        </div>
+      </div>
+
+      <!-- Dual Pricing: true zero -->
+      <div class="dual-card">
+        <div class="dual-badge">DUAL PRICING ONLY</div>
+        <div class="surcharge-headline" style="color:var(--green); font-size:30px">TRUE $0</div>
+        <div class="surcharge-sub" style="margin-bottom:10px">The only way the merchant reaches a true zero cost is on a dual pricing setup — a cash price and a card price shown at the register.</div>
+        <div class="surcharge-stat" style="border-top-color:rgba(0,214,143,0.15)">
+          <span class="surcharge-stat-label">Business pays</span>
+          <span class="surcharge-stat-value" style="color:var(--green)">$0.00</span>
+        </div>
+        <div class="surcharge-stat" style="border-top-color:rgba(0,214,143,0.15)">
+          <span class="surcharge-stat-label">Annual savings vs current</span>
+          <span class="surcharge-stat-value" id="dualAnnual" style="color:var(--green)">—</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">Clear / Start Over</button>
+    <div class="footer">TECH-PAYMENTS.COM &nbsp;&bull;&nbsp; (425) 364-0532 OPT 4</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ REFERENCE VIEW ═══ -->
+  <div class="view" id="viewRef">
+
+    <div class="section" style="animation-delay:0.04s">
+      <div class="section-label">Pricing Models</div>
+      <div class="ref-card">
+        <div class="ref-card-title" style="color:var(--green)">Interchange Plus (IC+)</div>
+        <div class="ref-card-body">Interchange is the <strong>base cost set by Visa/Mastercard</strong> — nobody can change it. The "Plus" is your margin on top. Most transparent model. Business sees exactly what they're paying and why. <strong>We don't do flat rate</strong> — every rate is an estimate that moves with card mix and ticket size.</div>
+        <div class="rate-chips">
+          <span class="chip chip-green">Oil Change: ~1.25% avg</span>
+          <span class="chip chip-blue">Other Auto: ~2.00% avg</span>
+        </div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title" style="color:var(--gold)">Surcharge</div>
+        <div class="ref-card-body"><strong>Gets close to zero, not all the way.</strong> Most of the cost is passed to the cardholder at checkout, but the business still carries a small residual, typically <strong>0.3% to 0.5%</strong> of volume. Tech-Payments handles full compliance — disclosure, receipts, rate caps.</div>
+        <div class="rate-chips">
+          <span class="chip chip-gold">Residual: 0.3% – 0.5%</span>
+        </div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title" style="color:var(--green)">Dual Pricing</div>
+        <div class="ref-card-body">Two prices shown at register — cash price and card price. <strong>The only path to a true $0 for the merchant.</strong> The difference fully covers processing. Discuss case by case for auto shops.</div>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.08s">
+      <div class="section-label">Key Numbers — Know These Cold</div>
+      <div class="ref-card">
+        <ul class="fact-list">
+          <li><span class="fact-dot"></span><span>Oil change shops: <strong>~1.25% IC+ average</strong> (varies by shop)</span></li>
+          <li><span class="fact-dot"></span><span>Other auto shops: <strong>~2.00% IC+ average</strong> (varies by shop)</span></li>
+          <li><span class="fact-dot"></span><span>Surcharge: residual <strong>0.3% – 0.5%</strong>. True $0 needs dual pricing.</span></li>
+          <li><span class="fact-dot"></span><span><strong>Next day funding</strong> — 11:00PM settlement cutoff</span></li>
+          <li><span class="fact-dot"></span><span><strong>No cancellation fees.</strong> Unlimited trial period.</span></li>
+          <li><span class="fact-dot"></span><span>Under contract? <strong>We can usually buy it out.</strong></span></li>
+          <li><span class="fact-dot"></span><span><strong>Free equipment</strong> with integrated text-to-pay</span></li>
+          <li><span class="fact-dot"></span><span><strong>24/7 US-based support,</strong> 365 days</span></li>
+          <li><span class="fact-dot"></span><span>5-star reviews on <strong>Yelp and Google</strong></span></li>
+          <li><span class="fact-dot"></span><span><strong>Veteran owned and operated</strong></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.12s">
+      <div class="section-label">Effective Rate — The Core Move</div>
+      <div class="ref-card">
+        <div class="ref-card-body">
+          <strong>Total fees ÷ total volume = effective rate.</strong><br><br>
+          Most owners only know their advertised rate — not what they actually pay after batch fees, PCI fees, monthly minimums, and statement fees stack on top. The gap between those two numbers is your opening.<br><br>
+          Example: Owner thinks they're on <strong>2.2%</strong>. You pull the statement and the math shows <strong>3.1%.</strong> That's your moment.
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.15s">
+      <div class="section-label">Statement Review — What to Look For</div>
+      <div class="ref-card">
+        <ul class="fact-list">
+          <li><span class="fact-dot"></span><span>Total monthly <strong>volume processed</strong></span></li>
+          <li><span class="fact-dot"></span><span>Total <strong>fees charged</strong> (all line items)</span></li>
+          <li><span class="fact-dot"></span><span>Are they <strong>locked in a contract?</strong> When does it end?</span></li>
+          <li><span class="fact-dot"></span><span>Who is their <strong>current processor?</strong></span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" style="animation-delay:0.18s">
+      <div class="section-label">Objections + Responses</div>
+      <div class="obj-card">
+        <div class="obj-q">"I'm locked into a contract."</div>
+        <div class="obj-a">In most cases <strong>we can buy it out.</strong> Don't let that stop the conversation — let me find out what you're in and we'll figure it out.</div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-q">"I'm happy with my current processor."</div>
+        <div class="obj-a">Most owners say that until we look at the statement together. Can I take five minutes and show you your effective rate? <strong>If we can't beat it, I'll tell you.</strong></div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-q">"Is surcharging even legal?"</div>
+        <div class="obj-a">Yes, and <strong>we handle all the compliance for you</strong> — disclosure, receipt formatting, rate caps. Set up correctly from day one.</div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-q">"What if I don't like it?"</div>
+        <div class="obj-a"><strong>No cancellation fee, unlimited trial.</strong> If you're not happy, we terminate the account, pick up our terminal, and reconnect your old one. Zero risk.</div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-q">"I don't have time right now."</div>
+        <div class="obj-a">Totally understand. Can I come back Thursday? <strong>Five minutes on your statement could save you thousands a year.</strong> Worth a second look.</div>
+      </div>
+    </div>
+    <div style="height:10px"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ QUIZ VIEW ═══ -->
+  <div class="view" id="viewQuiz">
+    <div class="quiz-wrap" id="quizActive">
+      <div class="quiz-progress-bar">
+        <div class="quiz-progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="quiz-counter" id="quizCounter">Question 1 of 12</div>
+
+      <div class="quiz-card">
+        <div class="quiz-category" id="qCategory">Rates</div>
+        <div class="quiz-question" id="qText">Loading...</div>
+      </div>
+
+      <div class="quiz-answer-box" id="answerBox">
+        <div class="quiz-answer-label">Answer</div>
+        <div class="quiz-answer-text" id="answerText"></div>
+      </div>
+
+      <div class="quiz-btn-row single" id="revealRow">
+        <button class="qbtn qbtn-reveal" onclick="revealAnswer()">Reveal Answer</button>
+      </div>
+      <div class="quiz-btn-row" id="ratingRow" style="display:none">
+        <button class="qbtn qbtn-got" onclick="markAnswer(true)">Got It</button>
+        <button class="qbtn qbtn-missed" onclick="markAnswer(false)">Missed It</button>
+      </div>
+    </div>
+
+    <div class="score-screen" id="scoreScreen" style="display:none">
+      <div class="score-big" id="scoreNum">0/0</div>
+      <div class="score-label">Final Score</div>
+      <div class="score-msg" id="scoreMsg"></div>
+      <button class="score-restart" onclick="startQuiz()">Retake Quiz</button>
+      <div class="missed-list" id="missedList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ BOTTOM NAV ═══ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="navCalc" onclick="showView('calc')">
+      <span class="nav-icon">⌗</span>
+      <span class="nav-label">Calculator</span>
+    </button>
+    <button class="nav-btn" id="navRef" onclick="showView('ref')">
+      <span class="nav-icon">◈</span>
+      <span class="nav-label">Reference</span>
+    </button>
+    <button class="nav-btn" id="navQuiz" onclick="showView('quiz')">
+      <span class="nav-icon">◎</span>
+      <span class="nav-label">Quiz</span>
+    </button>
+  </nav>
+
+</div>
+<script>
+  /* ── NAV ── */
+  const SUBTITLES = { calc:'Rate Analyzer', ref:'Field Reference', quiz:'Study Mode' };
+
+  function showView(v) {
+    ['calc','ref','quiz'].forEach(id => {
+      document.getElementById('view'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('active', id===v);
+      document.getElementById('nav'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('active', id===v);
+    });
+    document.getElementById('headerSub').textContent = SUBTITLES[v];
+    if (v==='quiz' && !quizStarted) startQuiz();
+    window.scrollTo(0,0);
+  }
+
+  /* ── CALCULATOR ── */
+  let shopType = 'oil';
+  const PLANS = {
+    oil:  [
+      { rate:1.25, label:'Interchange Plus', tag:'tag-ic', tagText:'IC+', best:true },
+      { rate:2.00, label:'Interchange Plus', tag:'tag-ic', tagText:'IC+', best:false },
+    ],
+    other: [
+      { rate:2.00, label:'Interchange Plus', tag:'tag-ic', tagText:'IC+', best:true },
+    ]
+  };
+
+  function fmt(n){ return n.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  function setShopType(t){
+    shopType=t;
+    document.getElementById('btnOil').classList.toggle('active',t==='oil');
+    document.getElementById('btnOther').classList.toggle('active',t==='other');
+    calculate();
+  }
+
+  function calculate(){
+    const volume=parseFloat(document.getElementById('volume').value)||0;
+    const fees=parseFloat(document.getElementById('fees').value)||0;
+    const rateEl=document.getElementById('effectiveRate');
+    const verdictEl=document.getElementById('rateVerdict');
+    const rb=document.getElementById('resultsBlock');
+    const sb=document.getElementById('surchargeBlock');
+
+    if(!volume||!fees){
+      rateEl.textContent='—'; rateEl.className='rate-number empty';
+      verdictEl.textContent='Enter volume and fees above'; verdictEl.style.color='';
+      rb.classList.add('hidden'); sb.classList.add('hidden'); return;
+    }
+
+    const er=(fees/volume)*100;
+    rateEl.textContent=er.toFixed(2)+'%';
+    const thr=shopType==='oil'?1.25:2.0;
+
+    if(er<=thr){ rateEl.className='rate-number good'; verdictEl.textContent='Already competitive — we can still compare plans.'; verdictEl.style.color='var(--green)'; }
+    else if(er<=thr+1){ rateEl.className='rate-number fair'; verdictEl.textContent='Room to improve — savings available.'; verdictEl.style.color='var(--gold)'; }
+    else { rateEl.className='rate-number bad'; verdictEl.textContent="Overpaying significantly — let's fix this."; verdictEl.style.color='var(--red)'; }
+
+    const grid=document.getElementById('compareGrid'); grid.innerHTML='';
+    PLANS[shopType].forEach(plan=>{
+      const nf=(plan.rate/100)*volume, ms=fees-nf, an=ms*12;
+      const card=document.createElement('div');
+      card.className='compare-card'+(plan.best?' best':'');
+      card.innerHTML=`
+        <div>
+          <div class="card-rate">~${plan.rate.toFixed(2)}%</div>
+          <div class="card-label">${plan.label} <span class="plan-tag ${plan.tag}">${plan.tagText}</span></div>
+          ${ms>0?`<div class="annual-row">Est. annual: <span>${fmt(an)}</span></div>`:''}
+        </div>
+        <div class="card-savings">
+          <div class="savings-amount ${ms<=0?'zero':''}">${ms>0?'~+'+fmt(ms):fmt(ms)}</div>
+          <div class="savings-period">est. / month</div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    document.getElementById('surCurrentFees').textContent=fmt(fees);
+
+    // Residual cost tiers: 0.3%, 0.4%, 0.5% of volume
+    const residualGrid=document.getElementById('residualGrid');
+    residualGrid.innerHTML='';
+    [0.3,0.4,0.5].forEach(r=>{
+      const cost=(r/100)*volume;
+      const cell=document.createElement('div');
+      cell.className='residual-cell';
+      cell.innerHTML=`
+        <div class="residual-rate">${r.toFixed(1)}%</div>
+        <div class="residual-cost">${fmt(cost)}</div>
+        <div class="residual-period">per month</div>`;
+      residualGrid.appendChild(cell);
+    });
+
+    // Dual pricing true zero annual savings = full current fees
+    document.getElementById('dualAnnual').textContent=fmt(fees*12);
+
+    rb.classList.remove('hidden'); sb.classList.remove('hidden');
+  }
+
+  function resetAll(){
+    ['volume','fees'].forEach(id=>document.getElementById(id).value='');
+    setShopType('oil'); calculate();
+  }
+
+  document.getElementById('volume').addEventListener('input',calculate);
+  document.getElementById('fees').addEventListener('input',calculate);
+
+  /* ── QUIZ ── */
+  const QUESTIONS=[
+    {category:"Rates",q:"What rate do you quote an oil change shop?",a:"<strong>Around 1.25% on average</strong> — but it's an estimate, not a promise. Could land lower or higher depending on their card mix and ticket size. We don't do flat rate."},
+    {category:"Rates",q:"What rate do you quote other auto shops (non oil change)?",a:"<strong>Around 2.00% on average.</strong> Same rule: it's an approximation that moves per shop. Frame it as an estimate, never a locked number."},
+    {category:"Surcharge",q:"With surcharging through us, what does the business actually pay?",a:"A small residual, <strong>typically 0.3% to 0.5% of volume.</strong> Surcharging gets them close to zero, not all the way. Be honest about this."},
+    {category:"Surcharge",q:"What's the only way a merchant reaches a TRUE $0 cost?",a:"<strong>Dual pricing.</strong> A cash price and a card price shown at the register. Straight surcharge still leaves a 0.3-0.5% residual."},
+    {category:"Surcharge",q:"A shop does $100k/month. What's their residual cost range on surcharge?",a:"<strong>$300 to $500/month</strong> (0.3% to 0.5% of $100k). Compare that to what they pay now to show the gap."},
+    {category:"Effective Rate",q:"How do you calculate a business's effective rate?",a:"<strong>Total monthly fees divided by total monthly volume.</strong> Example: $3,100 fees on $100,000 volume = 3.1% effective rate."},
+    {category:"Effective Rate",q:"Why is the effective rate usually higher than the advertised rate?",a:"Hidden fees stack on top: <strong>batch fees, PCI compliance fees, monthly minimums, statement fees.</strong> The rate they think they pay rarely matches what they actually pay."},
+    {category:"Statement Review",q:"Name the 4 things you're looking for when reviewing a statement.",a:"<strong>1. Total volume processed<br>2. Total fees charged<br>3. Are they in a contract?<br>4. Who is their current processor?</strong>"},
+    {category:"Key Benefits",q:"What happens if a merchant is unhappy with Tech-Payments?",a:"<strong>No cancellation fee. Unlimited trial.</strong> We terminate the account, pick up our terminal, and reconnect their old one. Zero risk."},
+    {category:"Key Benefits",q:"What is the funding timeline and settlement cutoff?",a:"<strong>Next day funding with an 11:00PM settlement cutoff.</strong> Most processors cut off at 8 or 9PM — the later cutoff means more transactions get funded next morning."},
+    {category:"Key Benefits",q:"A prospect says they're locked in a contract. What do you say?",a:"<strong>In most cases we can buy it out.</strong> Don't let the contract end the conversation — find out what they're in and work from there."},
+    {category:"Objections",q:"A shop owner asks if surcharging is legal. What's your answer?",a:"<strong>Yes, and we handle all the compliance.</strong> Proper disclosure, receipt formatting, rate caps — set up correctly from day one. They don't figure out any of it."},
+  ];
+
+  let currentQ=0, score=0, missed=[], shuffled=[], quizStarted=false;
+
+  function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+
+  function startQuiz(){
+    quizStarted=true;
+    shuffled=shuffle(QUESTIONS);
+    currentQ=0; score=0; missed=[];
+    document.getElementById('scoreScreen').style.display='none';
+    document.getElementById('quizActive').style.display='block';
+    loadQuestion();
+  }
+
+  function loadQuestion(){
+    const q=shuffled[currentQ], total=shuffled.length;
+    document.getElementById('progressFill').style.width=((currentQ/total)*100)+'%';
+    document.getElementById('quizCounter').textContent=`Question ${currentQ+1} of ${total}`;
+    document.getElementById('qCategory').textContent=q.category;
+    document.getElementById('qText').textContent=q.q;
+    document.getElementById('answerText').innerHTML=q.a;
+    document.getElementById('answerBox').classList.remove('show');
+    document.getElementById('revealRow').style.display='grid';
+    document.getElementById('ratingRow').style.display='none';
+  }
+
+  function revealAnswer(){
+    document.getElementById('answerBox').classList.add('show');
+    document.getElementById('revealRow').style.display='none';
+    document.getElementById('ratingRow').style.display='grid';
+  }
+
+  function markAnswer(got){
+    if(got) score++; else missed.push(shuffled[currentQ]);
+    currentQ++;
+    if(currentQ>=shuffled.length) showScore(); else loadQuestion();
+  }
+
+  function showScore(){
+    document.getElementById('quizActive').style.display='none';
+    document.getElementById('scoreScreen').style.display='block';
+    document.getElementById('progressFill').style.width='100%';
+    const total=shuffled.length, pct=Math.round((score/total)*100);
+    const el=document.getElementById('scoreNum');
+    el.textContent=`${score}/${total}`;
+    el.style.color=pct>=80?'var(--green)':pct>=60?'var(--gold)':'var(--red)';
+    document.getElementById('scoreMsg').textContent=
+      pct>=80?"You're ready to walk into any shop. You know the numbers, the objections, and the offer cold.":
+      pct>=60?"Getting there. Run through the ones you missed and you'll be dialed in.":
+      "Keep studying. Hit the Reference tab — focus on rates and objections first.";
+    const ml=document.getElementById('missedList');
+    ml.innerHTML=missed.length?`<div class="missed-title">Review These</div>`+missed.map(m=>`<div class="missed-item"><strong>${m.q}</strong>${m.a}</div>`).join(''):'';
+  }
+</script>
+</body>
+</html>
